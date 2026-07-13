@@ -9,8 +9,8 @@ Five temptation values and three penalty strengths are evaluated with repeated s
 
 ## Contents
 
-- `report/manuscript.pdf`: anonymized final report.
-- `report/manuscript.tex`: anonymized LaTeX source.
+- `report/manuscript.pdf`: final report.
+- `report/manuscript.tex`: LaTeX source.
 - `src/ca_model.py`: cellular-automata model and metrics.
 - `src/run_experiments.py`: experimental conditions, repetitions, snapshots, and serialization.
 - `src/visualization.py`: figure-generation pipeline.
@@ -26,4 +26,4 @@ python visualization.py
 
 The full experiment is intentionally substantial: 100 x 100 grids, 1,000 time steps, and repeated parameter combinations. Generated raw arrays and JSON summaries are ignored because they are reproducible and unnecessarily large for source control.
 
-The report preserves its academic bibliography while omitting assigned readings and reference files. Personal name, student number, department, and local paths have been removed.
+The report preserves its academic bibliography while omitting assigned readings and external reference files.
