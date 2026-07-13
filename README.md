@@ -37,7 +37,6 @@ Each project directory documents its own data and run instructions. Large public
 - Published figures are retained as reference outputs; scripts can regenerate them.
 - AI tools were used for debugging, code review, and writing assistance. Experimental design, validation, and final interpretation were reviewed by the author.
 - HW05 uses subjective utilities for teaching purposes. Its claims are not legal advice, factual adjudications, or forecasts.
-- The repository is anonymized: legal name, student number, department, local filesystem paths, and raw conversation logs have been removed.
 
 ## License and data
 
