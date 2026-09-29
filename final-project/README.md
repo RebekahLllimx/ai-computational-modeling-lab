@@ -18,6 +18,18 @@ Five temptation values and three penalty strengths are evaluated with repeated s
 
 ## Run
 
+For a small, deterministic check from the repository root:
+
+```bash
+python -m pip install -r requirements.txt
+python -m unittest discover -s final-project/tests -v
+python final-project/src/quick_demo.py
+```
+
+The quick run uses a 20 x 20 grid for 20 steps and does not reproduce the paper's figures. Cluster count and largest-cluster area now use periodic 8-neighbor connectivity, consistent with the evolution rule. Previously saved figures and report values were produced before this correction and have **not** been recalculated. Cooperation fraction and the evolution rule are unaffected; cluster count and largest-cluster area can change where clusters cross a boundary.
+
+To regenerate the original full experiment with the corrected metrics:
+
 ```bash
 cd final-project/src
 python run_experiments.py

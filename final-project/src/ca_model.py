@@ -6,7 +6,7 @@ Based on Nowak & May (1992) and Gross et al. (2016).
 """
 
 import numpy as np
-from scipy.ndimage import convolve, label, maximum_filter
+from scipy.ndimage import convolve, label
 from dataclasses import dataclass
 from typing import Optional
 
@@ -18,6 +18,42 @@ class CAMetrics:
     n_clusters: int           # Number of connected cooperator clusters
     a_max: float              # Largest cluster area (fraction of grid)
     interface_density: float  # C-D boundary length / total possible boundaries
+
+
+def periodic_cluster_sizes(grid: np.ndarray) -> np.ndarray:
+    """Areas of 8-connected cooperator clusters on the periodic lattice."""
+    labeled, count = label(grid, structure=np.ones((3, 3), dtype=int))
+    if count == 0:
+        return np.empty(0, dtype=int)
+
+    parent = np.arange(count + 1)
+
+    def root(item: int) -> int:
+        while parent[item] != item:
+            parent[item] = parent[parent[item]]
+            item = parent[item]
+        return item
+
+    def join(first: int, second: int) -> None:
+        if first and second:
+            parent[root(first)] = root(second)
+
+    height, width = grid.shape
+    # Only seams are missing from ndimage.label; interior diagonal links are
+    # already represented by its 3x3 structure.
+    for col in range(width):
+        for delta in (-1, 0, 1):
+            join(int(labeled[0, col]), int(labeled[-1, (col + delta) % width]))
+    for row in range(height):
+        for delta in (-1, 0, 1):
+            join(int(labeled[row, 0]), int(labeled[(row + delta) % height, -1]))
+
+    planar_sizes = np.bincount(labeled.ravel(), minlength=count + 1)
+    areas = {}
+    for component in range(1, count + 1):
+        representative = root(component)
+        areas[representative] = areas.get(representative, 0) + int(planar_sizes[component])
+    return np.fromiter(areas.values(), dtype=int)
 
 
 class HobbesCA:
@@ -142,15 +178,10 @@ class HobbesCA:
         """Compute all three-level metrics for the current grid state."""
         f_c = float(np.mean(self.grid))
 
-        # Connected cooperator clusters (8-connectivity)
-        structure = np.ones((3, 3), dtype=int)
-        labeled, n_clusters = label(self.grid, structure=structure)
-
-        if n_clusters > 0:
-            cluster_sizes = np.bincount(labeled.ravel())[1:]  # exclude background (0)
-            a_max = float(np.max(cluster_sizes)) / self.grid.size if len(cluster_sizes) > 0 else 0.0
-        else:
-            a_max = 0.0
+        # Same periodic Moore (8-neighbor) topology as the evolution rule.
+        cluster_sizes = periodic_cluster_sizes(self.grid)
+        n_clusters = len(cluster_sizes)
+        a_max = float(np.max(cluster_sizes)) / self.grid.size if n_clusters else 0.0
 
         # Interface density: fraction of adjacent C-D pairs
         interface = 0
