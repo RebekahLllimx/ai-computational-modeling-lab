@@ -1,43 +1,44 @@
 # AI & Computational Modeling Lab
 
-This repository is a curated collection of projects developed for *Artificial Intelligence and Computational Thinking* (Spring 2026). It focuses on network science, PageRank, game theory, and computational social science.
-
-Only original code, selected outputs, and documentation needed to understand the work are included. Course slides, lecture recordings, assigned readings, virtual environments, chat transcripts, and duplicate artifacts are intentionally excluded. HW06 and HW07 were in-class labs rather than standalone assignments, so they are not represented here.
+Coursework in network science, ranking algorithms, game theory, and computational social science, developed for *Artificial Intelligence and Computational Thinking* (Spring 2026). Each project has its own methods and run notes; this page is the entry point.
 
 ## Projects
 
-| Project | Methods | Highlight |
-| --- | --- | --- |
-| [HW01: Network visualization](hw01-network-visualization/) | NetworkX, PyVis | Weighted character network and Facebook ego-network |
-| [HW02: Network homophily](hw02-network-homophily/) | Ego-network analysis, E-I index, modularity | Gender homophily comparison across 10 ego-networks |
-| [HW03: Small-world networks](hw03-small-world-networks/) | Watts-Strogatz, Kleinberg, power-law fitting | 10,000-node lattice experiments |
-| [HW04: PageRank](hw04-pagerank/) | Sparse edge arrays, iterative PageRank | Analysis of the Web-Google graph |
-| [HW05: Game theory](hw05-game-theory/) | Payoff matrices, Nash equilibria | Two teaching case studies |
-| [Final project](final-project/) | Cellular automata, spatial evolutionary games | How centralized punishment changes cooperation dynamics |
+| Project | Question and approach |
+| --- | --- |
+| [Network visualization](hw01-network-visualization/) | Build a weighted character network and explore a Facebook ego network with NetworkX and PyVis. |
+| [Network homophily](hw02-network-homophily/) | Compare gender homophily across 10 ego networks using E-I index and modularity. |
+| [Small-world networks](hw03-small-world-networks/) | Study distance and degree patterns in Watts-Strogatz and Kleinberg-style networks. |
+| [PageRank](hw04-pagerank/) | Implement iterative PageRank and inspect the Web-Google graph. |
+| [Game theory](hw05-game-theory/) | Work through two teaching cases with payoff matrices and Nash equilibria. |
+| [Final project: Leviathan](final-project/) | Use a spatial evolutionary game to test when centralized punishment sustains cooperation. |
 
-## Featured result
+## Featured experiment
 
-The final project compares a spatial Prisoner's Dilemma with and without a centralized punishment mechanism. In the model's intermediate regime (`b = 1.6`), the intervention changes the long-run cooperation rate from roughly 42% to 73%; at higher temptation values (`b >= 1.8`), it fails to restore cooperation.
+The [final project](final-project/README.md) compares a spatial Prisoner's Dilemma with and without punishment of defectors. In the archived course runs, cooperation at `b = 1.6` was about 42% without the intervention and 73% with it. At `b >= 1.8`, the intervention did not restore cooperation after extinction. These are outcomes of this model and parameter sweep, not a general estimate of social behavior.
 
-![Final-project comparison](final-project/figures/fig2_ab_comparison.png)
+![Archived comparison of the two model conditions](final-project/figures/fig2_ab_comparison.png)
 
-## Setup
+The model's cluster-counting code was later corrected to use periodic eight-neighbor connectivity. The archived figures and report were produced before that correction and have **not** been regenerated; cluster count and largest-cluster area may change. The cooperation fraction and evolution rule are unaffected. See the [experiment notes and commands](final-project/README.md).
+
+## Run a small check
+
+From the repository root:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
+python -m unittest discover -s final-project/tests -v
+python final-project/src/quick_demo.py
 ```
 
-Each project directory documents its own data and run instructions. Large public datasets are downloaded from their original providers and are not committed to this repository.
+The quick demo uses a 20 x 20 grid for 20 steps. It checks the workflow; it does not reproduce the full study. For the 100 x 100, 1,000-step sweep and figure generation, follow the [final-project run guide](final-project/README.md). Other assignments have setup and data instructions in their own README files.
 
-## Reproducibility and responsible use
+## Repository notes
 
-- Randomized experiments use explicit seeds where supported.
-- Published figures are retained as reference outputs; scripts can regenerate them.
-- AI tools were used for debugging, code review, and writing assistance. Experimental design, validation, and final interpretation were reviewed by the author.
-- HW05 uses subjective utilities for teaching purposes. Its claims are not legal advice, factual adjudications, or forecasts.
-
-## License and data
-
-Original code is released under the [MIT License](LICENSE). Third-party datasets and cited research remain subject to their original terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Large public datasets are downloaded from their original providers; they are not committed here.
+- Randomized experiments use explicit seeds where supported. Saved figures are reference outputs, and source scripts are included for regeneration.
+- AI tools assisted with debugging, code review, and writing. The author reviewed the experimental design, validation, and interpretation.
+- Original code is available under the [MIT License](LICENSE). External data and research keep their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md).
+- The game-theory cases use teaching assumptions and subjective utilities. They are not legal advice or forecasts.
