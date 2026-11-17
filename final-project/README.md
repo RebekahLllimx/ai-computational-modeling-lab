@@ -9,8 +9,9 @@ Five temptation values and three penalty strengths are evaluated with repeated s
 
 ## Contents
 
-- `report/manuscript.pdf`: final report.
-- `report/manuscript.tex`: LaTeX source.
+- `report/technical_report.md`: English report for the current implementation and rerun.
+- `report/manuscript.pdf`: original course report.
+- `report/manuscript.tex`: original LaTeX source.
 - `docs/ENGINEERING_DESIGN.md`: requirements, architecture, interfaces, testing, and technical decisions.
 - `src/ca_model.py`: cellular-automata model and metrics.
 - `src/run_experiments.py`: experimental conditions, repetitions, snapshots, and serialization.
@@ -27,7 +28,7 @@ python -m unittest discover -s final-project/tests -v
 python final-project/src/quick_demo.py
 ```
 
-The quick run uses a 20 x 20 grid for 20 steps and does not reproduce the paper's figures. Cluster count and largest-cluster area use periodic 8-neighbor connectivity, consistent with the evolution rule. The archived course figures were generated before this metric correction: cooperation fractions remain valid, but cluster-specific values should be regenerated before reuse.
+The quick run uses a 20 x 20 grid for 20 steps and does not reproduce the full experiment. Cluster count and largest-cluster area use periodic 8-neighbor connectivity, consistent with the evolution rule. The selected `current_*.png` figures and the English technical report were regenerated with this implementation; the unprefixed figures belong to the original course submission.
 
 At `t = 500`, the control and intervention runs still share the same state. The penalty is applied to the transition from `t = 500` to `t = 501`, so paired trajectories can be compared from an identical pre-intervention history.
 

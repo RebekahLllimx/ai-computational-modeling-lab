@@ -17,9 +17,9 @@ Coursework in network science, ranking algorithms, game theory, and computationa
 
 The [final project](final-project/README.md) compares a spatial Prisoner's Dilemma with and without punishment of defectors. In the archived course runs, cooperation at `b = 1.6` was about 42% without the intervention and 73% with it. At `b >= 1.8`, the intervention did not restore cooperation after extinction. These are outcomes of this model and parameter sweep, not a general estimate of social behavior.
 
-![Archived comparison of the two model conditions](final-project/figures/fig2_ab_comparison.png)
+![Comparison of the two model conditions](final-project/figures/current_ab_comparison.png)
 
-The current implementation uses periodic eight-neighbor connectivity for both evolution and cluster measurement. The archived course figures predate that metric correction; the cooperation trajectory is unchanged, while cluster-specific measures should be regenerated before reuse. See the [experiment notes and commands](final-project/README.md).
+The current implementation uses periodic eight-neighbor connectivity for both evolution and cluster measurement. The [English technical report](final-project/report/technical_report.md) presents a full rerun under the current implementation. The original course manuscript and figures remain available as historical outputs.
 
 ## Run a small check
 
