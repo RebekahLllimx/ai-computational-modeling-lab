@@ -19,7 +19,7 @@ The [final project](final-project/README.md) compares a spatial Prisoner's Dilem
 
 ![Archived comparison of the two model conditions](final-project/figures/fig2_ab_comparison.png)
 
-The model's cluster-counting code was later corrected to use periodic eight-neighbor connectivity. The archived figures and report were produced before that correction and have **not** been regenerated; cluster count and largest-cluster area may change. The cooperation fraction and evolution rule are unaffected. See the [experiment notes and commands](final-project/README.md).
+The current implementation uses periodic eight-neighbor connectivity for both evolution and cluster measurement. The archived course figures predate that metric correction; the cooperation trajectory is unchanged, while cluster-specific measures should be regenerated before reuse. See the [experiment notes and commands](final-project/README.md).
 
 ## Run a small check
 
@@ -39,6 +39,5 @@ The quick demo uses a 20 x 20 grid for 20 steps. It checks the workflow; it does
 
 - Large public datasets are downloaded from their original providers; they are not committed here.
 - Randomized experiments use explicit seeds where supported. Saved figures are reference outputs, and source scripts are included for regeneration.
-- AI tools assisted with debugging, code review, and writing. The author reviewed the experimental design, validation, and interpretation.
 - Original code is available under the [MIT License](LICENSE). External data and research keep their own terms; see [third-party notices](THIRD_PARTY_NOTICES.md).
 - The game-theory cases use teaching assumptions and subjective utilities. They are not legal advice or forecasts.
