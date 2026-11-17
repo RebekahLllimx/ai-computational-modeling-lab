@@ -5,13 +5,14 @@ Spatial evolutionary Prisoner's Dilemma with optional Leviathan (centralized pun
 Based on Nowak & May (1992) and Gross et al. (2016).
 """
 
-import numpy as np
-from scipy.ndimage import convolve, label
 from dataclasses import dataclass
 from typing import Optional
 
+import numpy as np
+from scipy.ndimage import convolve, label
 
-@dataclass
+
+@dataclass(frozen=True)
 class CAMetrics:
     """Metrics for one time step of the CA."""
     f_c: float                # Cooperation fraction
@@ -82,6 +83,15 @@ class HobbesCA:
         leviathan_time: Optional[int] = None,
         seed: Optional[int] = None,
     ):
+        if grid_size < 2:
+            raise ValueError("grid_size must be at least 2")
+        if not 1.0 < b <= 2.0:
+            raise ValueError("b must satisfy 1 < b <= 2")
+        if p < 0.0:
+            raise ValueError("p must be non-negative")
+        if leviathan_time is not None and leviathan_time < 0:
+            raise ValueError("leviathan_time must be non-negative or None")
+
         self.grid_size = grid_size
         self.b = b
         self.p = p
@@ -91,7 +101,6 @@ class HobbesCA:
         # Initialize grid: 1 = Cooperator, 0 = Defector (50/50 random)
         self.grid = (self.rng.random((grid_size, grid_size)) < 0.5).astype(np.int8)
         self.time = 0
-        self._penalty_active = False
 
         # Pre-compute convolution kernel for counting cooperating neighbors
         self._kernel = np.ones((3, 3), dtype=np.int8)
@@ -113,7 +122,9 @@ class HobbesCA:
         payoff = np.where(self.grid == 1, n_coop, self.b * n_coop)
 
         # --- 3. Leviathan penalty ---
-        if self._penalty_active and self.p > 0:
+        # State t=leviathan_time is the last shared pre-intervention state.
+        # The penalty first affects the transition from t to t+1.
+        if self.penalty_active:
             payoff[self.grid == 0] -= self.p
 
         # --- 4. Imitate best in Moore neighborhood (vectorized) ---
@@ -141,11 +152,16 @@ class HobbesCA:
         self.grid = new_grid
         self.time += 1
 
-        # Activate Leviathan at the designated time
-        if self.leviathan_time is not None and self.time >= self.leviathan_time:
-            self._penalty_active = True
-
         return self.grid
+
+    @property
+    def penalty_active(self) -> bool:
+        """Whether the next transition applies the centralized penalty."""
+        return (
+            self.p > 0.0
+            and self.leviathan_time is not None
+            and self.time >= self.leviathan_time
+        )
 
     def run(self, steps: int, track_metrics: bool = True) -> dict:
         """
@@ -153,6 +169,9 @@ class HobbesCA:
 
         Returns a dict with time series of metrics if track_metrics=True.
         """
+        if steps < 0:
+            raise ValueError("steps must be non-negative")
+
         metrics_ts = {
             'f_c': [], 'n_clusters': [], 'a_max': [],
             'interface_density': [], 'time': [],
@@ -216,8 +235,11 @@ def compute_summary_stats(metrics_list: list) -> dict:
     if not metrics_list:
         return {}
 
-    n_runs = len(metrics_list)
-    n_steps = len(metrics_list[0]['f_c'])
+    expected_steps = len(metrics_list[0]['f_c'])
+    expected_time = metrics_list[0]['time']
+    for run in metrics_list:
+        if len(run['f_c']) != expected_steps or run['time'] != expected_time:
+            raise ValueError("all metric series must share the same time axis")
 
     summary = {}
     for key in ['f_c', 'n_clusters', 'a_max', 'interface_density']:

@@ -15,7 +15,6 @@ import json
 import time
 import os
 from datetime import datetime
-from itertools import product
 
 from ca_model import HobbesCA, compute_summary_stats
 
@@ -108,7 +107,8 @@ def run_condition_b(b_values=B_VALUES, p_values=P_VALUES,
 
                 elapsed = time.time() - t0
                 f_c_final = metrics['f_c'][-1]
-                # f_c just before Leviathan
+                # State at t=LEVIATHAN_TIME, immediately before the first
+                # penalized transition.
                 f_c_pre = metrics['f_c'][LEVIATHAN_TIME - 1]
                 print(f"  [{current}/{total}] b={b:.1f}, p={p:.1f}, rep={rep+1} | "
                       f"f_c_pre={f_c_pre:.3f} → f_c_final={f_c_final:.3f} | {elapsed:.1f}s")
@@ -202,15 +202,18 @@ def save_results(results_a, results_b, summary, snapshots):
     with open(os.path.join(OUTPUT_DIR, 'summary.json'), 'w') as f:
         json.dump(summary_json, f, indent=2)
 
-    # Save raw metrics as npz
+    # Store every metric as a numeric array. Avoid nested dictionaries, which
+    # NumPy serializes as object arrays that require pickle to load.
     raw = {}
     for b, reps in results_a.items():
         for i, rep in enumerate(reps):
-            raw[f'A_b{b}_rep{i}'] = {k: np.array(v) for k, v in rep.items()}
+            for metric, values in rep.items():
+                raw[f'A_b{b}_rep{i}_{metric}'] = np.asarray(values)
     for b, p_dict in results_b.items():
         for p, reps in p_dict.items():
             for i, rep in enumerate(reps):
-                raw[f'B_b{b}_p{p}_rep{i}'] = {k: np.array(v) for k, v in rep.items()}
+                for metric, values in rep.items():
+                    raw[f'B_b{b}_p{p}_rep{i}_{metric}'] = np.asarray(values)
 
     np.savez_compressed(os.path.join(OUTPUT_DIR, 'raw_metrics.npz'), **raw)
 
@@ -232,6 +235,10 @@ def save_results(results_a, results_b, summary, snapshots):
         'b_values': B_VALUES,
         'p_values': P_VALUES,
         'snapshot_times': SNAPSHOT_TIMES,
+        'intervention_semantics': (
+            'The state at leviathan_time is the last shared pre-intervention '
+            'state; punishment applies to the following transition.'
+        ),
     }
     with open(os.path.join(OUTPUT_DIR, 'metadata.json'), 'w') as f:
         json.dump(meta, f, indent=2)
