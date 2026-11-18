@@ -1,16 +1,18 @@
 # HW02: Network homophily
 
-This assignment has two connected parts. The required analysis measures gender
-homophily in Facebook ego-networks. The accompanying slide deck also posed an
-open reflection question about how the network might evolve; the
-`network_evolution.py` extension answers it by simulating friendship and
-group-affiliation closure over successive steps.
+This assignment has two connected parts. The first reproduces the slide-deck
+gender-homophily analysis for ego network 0 and applies the same comparison to
+the other Facebook ego networks. The second implements a specified network
+evolution exercise: starting from the supplied adjacency and club-affiliation
+matrices, it applies the given friendship and club-joining rules until the
+network converges.
 
 The comparison reports observed same-type edge rates against a baseline implied by the node-type distribution. Across the ten analyzed ego-networks, every estimated homophily index is positive, although effect sizes vary.
 
-The evolution component is therefore part of the submitted intellectual work,
-not a later portfolio feature. It turns the slide question into an explicit
-update process and records how the homophily measures change after each step.
+`network_evolution.py` records the new edges and club memberships at each step,
+draws the evolving network, and recalculates homophily for the four club-status
+categories. It is part of the original assignment rather than a later
+portfolio extension.
 
 ## Data
 
