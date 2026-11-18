@@ -2,16 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 from collections import defaultdict
-import math
-import platform
 from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "results"
-
-# 解决mac系统字体兼容性问题
-if platform.system() == 'Darwin':  # macOS
-    plt.rcParams['font.family'] = ['Arial Unicode MS', 'Heiti TC', 'Hiragino Sans GB']
-    plt.rcParams['axes.unicode_minus'] = False
 
 class NetworkEvolution:
     def __init__(self):
@@ -145,16 +138,16 @@ class NetworkEvolution:
         return new_participations
 
     def calculate_homophily_measures(self):
-        """Calculate professional homophily measures: E-I index and Modularity Q"""
-        # Define 4-value club participation patterns: 0=无, 1=C1 only, 2=C2 only, 3=C1+C2
+        """Measure same-group edges, E-I index, and degree-based modularity."""
+        # Membership categories: no club, C1 only, C2 only, or both clubs.
         patterns = []
         for i in range(self.num_people):
             if self.club_affiliations[i, 0] == 0 and self.club_affiliations[i, 1] == 0:
-                patterns.append(0)  # 无俱乐部
+                patterns.append(0)  # No clubs
             elif self.club_affiliations[i, 0] == 1 and self.club_affiliations[i, 1] == 0:
-                patterns.append(1)  # 仅C1
+                patterns.append(1)  # C1 only
             elif self.club_affiliations[i, 0] == 0 and self.club_affiliations[i, 1] == 1:
-                patterns.append(2)  # 仅C2
+                patterns.append(2)  # C2 only
             else:
                 patterns.append(3)  # C1+C2
 
@@ -177,6 +170,7 @@ class NetworkEvolution:
                 'simple_homophily': 0.0,
                 'ei_index': 0.0,
                 'modularity_q': 0.0,
+                'original_score': 0.0,
                 'internal_edges': 0,
                 'external_edges': 0,
                 'total_edges': 0
@@ -224,19 +218,27 @@ class NetworkEvolution:
         if expected_total > 0:
             expected_matrix = expected_matrix * (total_edges / expected_total)
 
-        # Calculate modularity Q
-        modularity_q = 0.0
+        # Retain the original class-size score for comparison with the course run.
+        original_score = 0.0
         for i in range(4):
             actual_internal = mixing_matrix[i, i] / 2  # Divide by 2 for undirected edges
             expected_internal = expected_matrix[i, i] / 2
 
             if total_edges > 0:
-                modularity_q += (actual_internal - expected_internal) / total_edges
+                original_score += (actual_internal - expected_internal) / total_edges
+
+        # Newman modularity uses the observed degree distribution as its null model.
+        graph = nx.from_numpy_array(self.social_network)
+        groups = defaultdict(set)
+        for node, pattern in enumerate(patterns):
+            groups[pattern].add(node)
+        modularity_q = nx.community.modularity(graph, list(groups.values()))
 
         return {
             'simple_homophily': simple_homophily,
             'ei_index': ei_index,
             'modularity_q': modularity_q,
+            'original_score': original_score,
             'internal_edges': L_internal,
             'external_edges': L_external,
             'total_edges': total_edges
@@ -439,7 +441,7 @@ class NetworkEvolution:
 
         # Calculate initial homophily measures BEFORE any evolution
         initial_measures = self.calculate_homophily_measures()
-        print(f"\nInitial Homophily Measures:")
+        print("\nInitial Homophily Measures:")
         print(f"  Simple Homophily: {initial_measures['simple_homophily']:.3f}")
         print(f"  E-I Index: {initial_measures['ei_index']:.3f}")
         print(f"  Modularity Q: {initial_measures['modularity_q']:.3f}")
@@ -466,18 +468,18 @@ class NetworkEvolution:
             print(f"Step {step}:")
             print('='*50)
 
-            # Store state before evolution for comparison
-            social_before = self.social_network.copy()
+            # Store memberships before evolution to highlight new links.
             clubs_before = self.club_affiliations.copy()
 
             # Calculate homophily measures BEFORE applying closure mechanisms
             measures_before = self.calculate_homophily_measures()
-            print(f"Homophily before evolution:")
+            print("Homophily before evolution:")
             print(f"  Simple Homophily: {measures_before['simple_homophily']:.3f}")
             print(f"  E-I Index: {measures_before['ei_index']:.3f}")
             print(f"  Modularity Q: {measures_before['modularity_q']:.3f}")
 
-            # Apply closure mechanisms (each mechanism considers the state at the beginning of the step)
+            # Apply friendship closures first, then club participation. A new
+            # friendship can therefore influence a club decision in this step.
             new_edges_1 = self.closure_mechanism_1()
             new_edges_2 = self.closure_mechanism_2()
             new_participations = self.closure_mechanism_3()
@@ -502,11 +504,11 @@ class NetworkEvolution:
             else:
                 print("No new club participations")
 
-            print(f"Homophily after evolution:")
+            print("Homophily after evolution:")
             print(f"  Simple Homophily: {measures_after['simple_homophily']:.3f}")
             print(f"  E-I Index: {measures_after['ei_index']:.3f}")
             print(f"  Modularity Q: {measures_after['modularity_q']:.3f}")
-            print(f"Homophily changes:")
+            print("Homophily changes:")
             print(f"  Simple: {measures_after['simple_homophily'] - measures_before['simple_homophily']:+.3f}")
             print(f"  E-I: {measures_after['ei_index'] - measures_before['ei_index']:+.3f}")
             print(f"  Q: {measures_after['modularity_q'] - measures_before['modularity_q']:+.3f}")
@@ -528,11 +530,11 @@ class NetworkEvolution:
         print(self.club_affiliations)
 
         final_measures = self.calculate_homophily_measures()
-        print(f"\nFinal Homophily Measures:")
+        print("\nFinal Homophily Measures:")
         print(f"  Simple Homophily: {final_measures['simple_homophily']:.3f}")
         print(f"  E-I Index: {final_measures['ei_index']:.3f}")
         print(f"  Modularity Q: {final_measures['modularity_q']:.3f}")
-        print(f"Total Homophily Changes:")
+        print("Total Homophily Changes:")
         print(f"  Simple: {final_measures['simple_homophily'] - initial_measures['simple_homophily']:+.3f}")
         print(f"  E-I: {final_measures['ei_index'] - initial_measures['ei_index']:+.3f}")
         print(f"  Q: {final_measures['modularity_q'] - initial_measures['modularity_q']:+.3f}")
