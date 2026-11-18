@@ -9,16 +9,18 @@ Generates publication-quality figures covering all three levels of analysis:
 Uses matplotlib + seaborn for consistent, clean styling.
 """
 
-import numpy as np
 import json
 import os
+
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
+import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.lines import Line2D
-import seaborn as sns
+from matplotlib.patches import Patch
 
 # ---------------------------------------------------------------------------
 # Styling
@@ -233,21 +235,21 @@ def fig3_full_grid(summary):
 # Figure 4: Spatial snapshots
 # --------------------------------------------------------------------------
 
-def fig4_spatial_snapshots():
+def fig4_spatial_snapshots(*, reference_a=None, reference_b=None):
     """Grid snapshots at key time points for Condition A and B."""
     snap_file = os.path.join(OUTPUT_DIR, 'snapshots.npz')
     if not os.path.exists(snap_file):
         print("  [Skip] Snapshots file not found. Run run_experiments.py first.")
         return
 
-    snap = np.load(snap_file, allow_pickle=True)
+    snap = np.load(snap_file, allow_pickle=False)
     b_vals = [1.2, 1.4, 1.6, 1.8, 2.0]
     p_display = [0.1, 0.3, 0.5]  # Three p values for display
 
     # Find matching keys
     # Build a dict: (cond, b, p, t) -> grid
     available = {}
-    for key in snap.keys():
+    for key in snap:
         parts = key.split('_')
         # Format: A_b1.2_pNA_t0 or B_b1.6_p0.3_t750 etc.
         cond = parts[0]
@@ -274,20 +276,22 @@ def fig4_spatial_snapshots():
                 ax.set_ylabel(f'$b={b:.1f}$', fontsize=10, rotation=0,
                               labelpad=20, ha='right')
             if i == 0:
-                label = f'$t={t}$'
-                if t == LEVIATHAN_TIME:
-                    label += '\n(Leviathan)'
-                ax.set_title(label, fontsize=9)
+                ax.set_title(f'$t={t}$', fontsize=9)
             # Thin border
             for spine in ax.spines.values():
                 spine.set_visible(True)
                 spine.set_linewidth(0.3)
 
-    fig.suptitle('Spatial Snapshots — State of Nature (No Leviathan)',
+    fig.suptitle('Spatial snapshots: no intervention',
                  fontweight='bold', y=1.01)
-    fig.tight_layout()
+    fig.legend(handles=[Patch(color='#f1c40f', label='Cooperator'),
+                        Patch(color='#2c3e50', label='Defector')],
+               loc='lower center', ncol=2, frameon=False)
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig4a_spatial_snapshots_a.png'))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig4a_spatial_snapshots_a.pdf'))
+    if reference_a is not None:
+        fig.savefig(reference_a)
     plt.close(fig)
     print("  Figure 4a saved.")
 
@@ -311,17 +315,22 @@ def fig4_spatial_snapshots():
             if i == 0:
                 label = f'$t={t}$'
                 if t == LEVIATHAN_TIME:
-                    label += '\n(Leviathan)'
+                    label += '\n(before penalty)'
                 ax.set_title(label, fontsize=9)
             for spine in ax.spines.values():
                 spine.set_visible(True)
                 spine.set_linewidth(0.3)
 
-    fig.suptitle(f'Figure 4b: Spatial Snapshots — Leviathan at $t=500$, $b={b_show}$',
+    fig.suptitle(f'Spatial snapshots: penalty after $t=500$, $b={b_show}$',
                  fontweight='bold', y=1.01)
-    fig.tight_layout()
+    fig.legend(handles=[Patch(color='#f1c40f', label='Cooperator'),
+                        Patch(color='#2c3e50', label='Defector')],
+               loc='lower center', ncol=2, frameon=False)
+    fig.tight_layout(rect=(0, 0.05, 1, 1))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig4b_spatial_snapshots_b.png'))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig4b_spatial_snapshots_b.pdf'))
+    if reference_b is not None:
+        fig.savefig(reference_b)
     plt.close(fig)
     print("  Figure 4b saved.")
 
@@ -330,7 +339,7 @@ def fig4_spatial_snapshots():
 # Figure 5: Final state analysis (Level 3 — Stabilization)
 # --------------------------------------------------------------------------
 
-def fig5_final_state(summary):
+def fig5_final_state(summary, *, reference_png=None):
     """Bar chart: final cooperation fraction f_c^∞ for all conditions."""
     data_a = summary['A']
     data_b = summary['B']
@@ -363,8 +372,8 @@ def fig5_final_state(summary):
 
     ax.set_xticks(x)
     ax.set_xticklabels([f'$b={b:.1f}$' for b in b_vals])
-    ax.set_ylabel('Final cooperation fraction $f_c^{{\\infty}}$')
-    ax.set_title('Final Cooperation Level by Temptation and Penalty')
+    ax.set_ylabel('Mean cooperation, last 500 states')
+    ax.set_title('Cooperation by temptation and penalty')
     ax.set_ylim(0, 1.05)
     ax.legend(loc='upper right', frameon=True)
     ax.grid(True, alpha=0.3, axis='y')
@@ -373,6 +382,8 @@ def fig5_final_state(summary):
     fig.tight_layout()
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig5_final_state.png'))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig5_final_state.pdf'))
+    if reference_png is not None:
+        fig.savefig(reference_png)
     plt.close(fig)
     print("  Figure 5 saved.")
 
@@ -520,11 +531,16 @@ def fig7_phase_diagram(summary):
 # Figure 8: Interface density & Cluster dynamics (Level 2)
 # --------------------------------------------------------------------------
 
-def fig8_interface_cluster(summary):
+def fig8_interface_cluster(summary, *, reference_png=None):
     """Interface density and largest cluster area — key dynamic metrics."""
     b_show = [1.4, 1.6, 1.8]
 
     fig, axes = plt.subplots(2, 3, figsize=(14, 8))
+    p_values = sorted(summary['B'][b_show[0]].keys())
+    palette = ['#d55e00', '#009e73', '#7a4b9d']
+    line_styles = ['-', '--', '-.']
+    colors = {p: palette[i % len(palette)] for i, p in enumerate(p_values)}
+    styles = {p: line_styles[i % len(line_styles)] for i, p in enumerate(p_values)}
 
     for j, b in enumerate(b_show):
         # Row 0: Interface density
@@ -537,15 +553,14 @@ def fig8_interface_cluster(summary):
         for p in sorted(summary['B'][b].keys()):
             data_b = summary['B'][b][p]
             ax0.plot(data_b['time'], data_b['interface_density_mean'],
-                     color=COLOR_LEVIATHAN, linewidth=1.2, alpha=0.7,
+                     color=colors[p], linestyle=styles[p], linewidth=1.5,
                      label=f'$p={p:.1f}$')
 
-        ax0.axvline(x=LEVIATHAN_TIME, color=COLOR_LEVIATHAN,
+        ax0.axvline(x=LEVIATHAN_TIME, color='#555555',
                     linestyle=':', linewidth=1, alpha=0.5)
         ax0.set_title(f'$b={b:.1f}$')
         if j == 0:
             ax0.set_ylabel('Interface density $\\rho(t)$')
-        ax0.legend(fontsize=7)
         ax0.grid(True, alpha=0.3)
 
         # Row 1: Largest cluster area
@@ -557,23 +572,26 @@ def fig8_interface_cluster(summary):
         for p in sorted(summary['B'][b].keys()):
             data_b = summary['B'][b][p]
             ax1.plot(data_b['time'], data_b['a_max_mean'],
-                     color=COLOR_LEVIATHAN, linewidth=1.2, alpha=0.7,
+                     color=colors[p], linestyle=styles[p], linewidth=1.5,
                      label=f'$p={p:.1f}$')
 
-        ax1.axvline(x=LEVIATHAN_TIME, color=COLOR_LEVIATHAN,
+        ax1.axvline(x=LEVIATHAN_TIME, color='#555555',
                     linestyle=':', linewidth=1, alpha=0.5)
         if j == 0:
             ax1.set_ylabel('Max cluster area $A_{max}(t)$')
         ax1.set_xlabel('Time step $t$')
-        ax1.legend(fontsize=7)
         ax1.grid(True, alpha=0.3)
 
-    fig.suptitle('Figure 8: Interface Dynamics & Cluster Growth (Level 2)',
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=4, frameon=False)
+    fig.suptitle('Interface density and largest cooperative cluster',
                  fontweight='bold', y=1.01)
     sns.despine()
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.04, 1, 0.98))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig8_interface_cluster.png'))
     fig.savefig(os.path.join(OUTPUT_DIR, 'fig8_interface_cluster.pdf'))
+    if reference_png is not None:
+        fig.savefig(reference_png)
     plt.close(fig)
     print("  Figure 8 saved.")
 

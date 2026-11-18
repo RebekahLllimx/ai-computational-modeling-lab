@@ -1,4 +1,4 @@
-# Engineering Design: Leviathan Spatial Game Experiment
+# Engineering design: Leviathan spatial game
 
 ## 1. Problem and requirements
 
@@ -74,7 +74,11 @@ visualization.py -----> figures
 
 ### Model interface
 
+From `final-project/src/`:
+
 ```python
+from ca_model import HobbesCA
+
 model = HobbesCA(
     grid_size=100,
     b=1.6,
@@ -86,7 +90,7 @@ metrics = model.run(steps=1000)
 snapshot = model.get_snapshot()
 ```
 
-`step()` advances exactly one synchronous transition. `time` is the index of the current state. If `leviathan_time=500`, the state at `t=500` is the last shared pre-intervention state and the penalty affects the next transition.
+`step()` advances one synchronous transition and returns the model's current grid array. Use `get_snapshot()` when an independent copy is required. `time` is the index of the current state. `run(steps)` records metrics after each transition, so a fresh model returns time indices `1` through `steps`, not the initial state. If `leviathan_time=500`, the state at `t=500` is the last shared pre-intervention state and the penalty affects the next transition.
 
 ### State and contracts
 
@@ -95,16 +99,16 @@ snapshot = model.get_snapshot()
 - Boundary condition: periodic in both dimensions.
 - Neighborhood: eight-cell Moore neighborhood.
 - Payoffs: cooperator `n_coop`; defector `b * n_coop`, less `p` when the intervention is active.
-- Update rule: imitate the highest-payoff strategy in the neighborhood; ties retain the current strategy because self is evaluated first.
+- Update rule: imitate the highest-payoff strategy among self and eight neighbors. Self wins a tie only if its payoff equals the maximum; ties between higher-payoff neighbors use the fixed array order in `step()`.
 
 ### Persisted outputs
 
-- `summary.json`: mean and standard deviation by condition and parameter combination.
-- `raw_metrics.npz`: one numeric array per condition, parameter combination, repetition, and metric.
+- `summary.json`: mean and standard deviation (`ddof=0`) across repetitions by condition and parameter combination.
+- `raw_metrics.npz`: one numeric array per condition, parameter combination, repetition, and metric; for example, `A_b1.6_rep0_f_c` and `B_b1.6_p0.1_rep0_f_c`.
 - `snapshots.npz`: flattened keys for condition, parameter values, and time.
-- `metadata.json`: experiment dimensions, seeds, intervention timing, and semantic notes.
+- `metadata.json`: experiment dimensions, parameter lists, intervention timing, snapshot times, and a run timestamp. Seeds are configured in `run_experiments.py`: `BASE_SEED=42`, with repetition `i` using `42+i`; they are not currently copied into this JSON file.
 
-No database is required because the workload is a bounded batch experiment with immutable array outputs.
+Load the NPZ files with `np.load(path, allow_pickle=False)`. The reference sweep's metric series have 1,000 samples indexed by states `1..1000`; snapshots also include state zero. Both the runner and figure generator overwrite files in `src/outputs/`. The committed `figures/current_*.png` images are selected reference exports and are not replaced by those commands.
 
 ## 4. Implementation
 
@@ -148,9 +152,9 @@ The test suite covers zero cooperators, all cooperators, clusters split by perio
 
 ## 6. Deployment and operations
 
-This is a reproducible batch experiment, not a network service. Deployment consists of creating a Python environment, installing dependencies, running the experiment, and rendering figures. Progress is printed per parameter combination with elapsed time and final cooperation.
+Run the experiment locally in the Python environment from the root README. The workflow uses no server or external API. Progress is printed per parameter combination with elapsed time and final cooperation.
 
-The output directory is intentionally disposable. Recovery after interruption is currently a rerun; checkpoints are not implemented because the reference sweep completes on a laptop-scale environment. Metadata records the run timestamp and configuration for result interpretation.
+An interrupted sweep must be rerun because there are no checkpoints. Copy any outputs that need to be retained before starting another sweep. Keep the source revision and `BASE_SEED` with archived results; metadata records the timestamp and parameter configuration but omits the seed and dependency versions.
 
 ## 7. Limitations and technical decisions
 

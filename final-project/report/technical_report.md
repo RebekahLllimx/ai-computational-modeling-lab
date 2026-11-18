@@ -4,7 +4,7 @@
 
 ## Abstract
 
-This project turns a claim from Hobbesian political philosophy into a controlled computational experiment. A spatial Prisoner's Dilemma evolves on a periodic 100 x 100 lattice. The baseline condition contains no central authority; the intervention condition introduces a fixed penalty on defectors after the two conditions have shared the same first 500 states. Five temptation values, three penalty levels, and five paired seeds are evaluated over 1,000 transitions.
+This project turns a claim from Hobbesian political philosophy into a controlled computational experiment. A spatial Prisoner's Dilemma evolves on a periodic 100 x 100 lattice. The baseline condition contains no central authority; the intervention condition introduces a fixed penalty on defectors after the two conditions have shared the same trajectory through state `t = 500`. Five temptation values, three penalty levels, and five paired seeds are evaluated over 1,000 transitions.
 
 The intervention has its largest effect in the intermediate regime. At `b = 1.6`, mean cooperation over the final 500 states is 0.420 without the institution and 0.734, 0.729, and 0.700 under penalties of 0.1, 0.3, and 0.5. The institution has smaller positive effects at `b = 1.4` and cannot restore cooperation at `b >= 1.8`, where cooperators disappear before the intervention. The result is therefore conditional: punishment changes a trajectory that still contains viable cooperation, but this model contains no mechanism for recreating a strategy that has already become extinct.
 
@@ -29,7 +29,7 @@ Each cell on a periodic square lattice contains either a cooperator (`1`) or a d
 
 Let `n_c` be the number of cooperating neighbors. A cooperator receives payoff `n_c`; a defector receives `b * n_c`, where `1 < b <= 2` is the temptation to defect. When the institution is active, a penalty `p` is subtracted from each defector's payoff.
 
-The system updates synchronously. Each cell observes itself and its eight neighbors, finds the highest payoff, and copies the corresponding strategy. Self is evaluated first, so exact payoff ties preserve the current strategy. The rule is deterministic after initialization, which makes paired comparisons directly reproducible.
+The system updates synchronously. Each cell observes itself and its eight neighbors, finds the highest payoff, and copies the corresponding strategy. Self is evaluated first and retains its strategy when its payoff ties for the maximum. Ties between higher-payoff neighbors follow the fixed array order in the implementation. The rule is deterministic after initialization, which makes paired comparisons directly reproducible.
 
 ### 2.3 Intervention timing
 
@@ -81,6 +81,11 @@ Mean cooperation over the final 500 states falls as the temptation to defect ris
 
 At `b = 1.2` and `b = 1.4`, cooperators form large spatial clusters and remain dominant. At `b = 1.6`, cooperation and defection coexist in a changing spatial boundary. At `b >= 1.8`, cooperators disappear early in the run.
 
+![Spatial evolution without an intervention](../figures/current_spatial_snapshots_a.png)
+
+Each row shows one temptation value. Gold cells cooperate and dark blue cells
+defect; the panels show snapshots from the same initial seed at different times.
+
 ### 5.2 Intervention effects
 
 The final-500-state means under the three penalty levels are:
@@ -95,7 +100,13 @@ The final-500-state means under the three penalty levels are:
 
 ![Final cooperation across the parameter grid](../figures/current_final_state.png)
 
+Each bar averages the last 500 states across five paired seeds. A baseline bar
+is shown alongside the three penalty levels for each temptation value.
+
 ![Cooperation trajectories at b = 1.6](../figures/current_ab_comparison.png)
+
+Lines show the mean cooperation trajectory; shaded bands show one standard
+deviation across seeds. The vertical line marks the intervention state.
 
 At `b = 1.6`, the paired trajectories coincide through the intervention state and separate immediately afterward. The cooperation fraction rises by roughly 0.28 to 0.31 relative to the baseline and settles into a cooperator-dominant state. The effect is not monotonic in penalty strength: `p = 0.5` produces a lower final mean than the two smaller penalties. With five deterministic seeds per setting, the experiment establishes a reproducible pattern for this model but does not justify a broad population-level significance claim.
 
@@ -105,7 +116,14 @@ The intervention changes both composition and geometry. At `b = 1.6`, the larges
 
 ![Spatial states for b = 1.6 under three penalty levels](../figures/current_spatial_snapshots_b.png)
 
+Gold cells cooperate and dark blue cells defect. Each row shows one penalty
+level; `t = 500` is the shared state before the penalty affects the next update.
+
 ![Interface density and largest-cluster dynamics](../figures/current_interface_cluster.png)
+
+The upper panels show the share of neighboring pairs with different strategies;
+the lower panels show the largest cooperative cluster as a fraction of the
+lattice. Colors and line styles distinguish the baseline and penalty levels.
 
 The periodic cluster correction matters when a cooperative region crosses a boundary. Without seam merging, one toroidal cluster can be counted as several planar clusters and its largest area understated. The current measurement now matches the topology used by the update rule.
 
@@ -114,6 +132,11 @@ The periodic cluster correction matters when a cooperative region crosses a boun
 The intervention does nothing at `b = 1.8` and `b = 2.0` because cooperation has already reached zero by `t = 500`. The update rule only copies strategies that exist in the local neighborhood; a payoff penalty can make defection less attractive, but it cannot introduce a missing cooperative strategy. The computational boundary therefore follows from the mechanism, not from an unexplained failure of optimization.
 
 ![Final-state classification](../figures/current_phase_diagram.png)
+
+Classification uses mean cooperation and largest-cluster area over the final
+500 states. Cooperation above 0.85 is classified as cooperation-dominant;
+cooperation below 0.05 is defection-dominant. Remaining states are classified
+as clustered if the largest cluster exceeds 0.3, and fragmented otherwise.
 
 ## 6. Interpretation
 
@@ -130,7 +153,7 @@ The non-monotonic result at `b = 1.6` also separates the existence of an institu
 - Five seeds are enough to reproduce the reported sweep, not to characterize every finite-size or initialization effect.
 - Penalty values are tested on a small grid rather than optimized or calibrated to empirical behavior.
 
-These limitations define extensions rather than hidden assumptions. Endogenous institution formation, alternative network structures, stochastic updates, institutional cost, and larger seed sets would each test a different part of the philosophical claim.
+Endogenous institution formation, alternative network structures, stochastic updates, institutional cost, and larger seed sets would each test a different part of the philosophical claim.
 
 ## 8. Reproduction
 
@@ -147,4 +170,4 @@ python -u run_experiments.py
 python visualization.py
 ```
 
-The full run used for this report completed 100 parameter/repetition runs plus snapshot collection in approximately 161 seconds on the maintenance environment. Generated arrays remain outside version control; selected figures are committed for inspection.
+The full run used for this report completed 100 parameter/repetition runs plus snapshot collection in approximately 161 seconds on the recorded local environment. Generated arrays remain outside version control; selected figures are included.

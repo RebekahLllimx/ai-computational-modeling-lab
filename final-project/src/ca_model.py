@@ -128,7 +128,7 @@ class HobbesCA:
             payoff[self.grid == 0] -= self.p
 
         # --- 4. Imitate best in Moore neighborhood (vectorized) ---
-        # Build 9 shifted arrays: self first → ties keep current strategy
+        # Self wins a maximum-payoff tie; other ties use the shift order below.
         H, W = self.grid.shape
         neighbors_payoff = np.empty((9, H, W), dtype=np.float64)
         neighbors_grid = np.empty((9, H, W), dtype=np.int8)

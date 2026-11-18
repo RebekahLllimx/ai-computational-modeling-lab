@@ -24,3 +24,5 @@ tmp/
 *.out
 *.xdv
 **/results/*.html
+**/results/runs/
+/local-archive/
