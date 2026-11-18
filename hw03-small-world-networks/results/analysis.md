@@ -1,16 +1,14 @@
-# 1. 复现课堂上WS模型验证过程；
-## 构建WS网络
-## Watts-Strogatz Network Analysis
-- Grid size: 100x100
-- Number of nodes: 10000
-- Number of edges: 40000
-- Average path length: 6.45
-- Average clustering coefficient: 0.3171
-- Rewiring probability: 0.1
+# Small-world network results
 
-## 计算距离分布
-## Distance Distribution
-| Distance | Probability |
+## Watts-Strogatz network
+
+The recorded run uses a 100 x 100 periodic lattice with 10,000 nodes and
+40,000 edges. At rewiring probability 0.1, its average shortest-path length is
+6.45 and its average clustering coefficient is 0.3171.
+
+### Shortest-path distribution
+
+| Distance | Reported proportion |
 |----------|-------------|
 | 0 | 0.000100 |
 | 1 | 0.000800 |
@@ -23,42 +21,45 @@
 | 8 | 0.131002 |
 | 9 | 0.004015 |
 | 10 | 0.000007 |
-![Distance Distribution](distance_distribution.png)
-结论：平均路径长度为6.45，短路径(<=10)概率为1，证明任何两个节点之间存在短路径的概率很⾼。
+![Recorded shortest-path distribution](ws_reference_distance.png)
 
-## 可视化网络
-## Visualizations
-截取20x20的网格制作可视化网络图片
-![Network Visualization (20x20)](network_visualization.png)
-![Original Lattice](original_lattice.png)
-程序还会生成 100*100 网格的交互式可视化网页。由于该 HTML 文件较大，仓库仅保留可重新生成它的代码。
+The table and figure preserve the recorded proportions. The original run
+included self-pairs in its counts but divided by `n * (n - 1)`, so the values
+sum to approximately 1.0001 rather than exactly 1. The current implementation
+excludes self-pairs. The observed path lengths are properties of this particular
+generated network.
 
-# 2. 用进一步的WSK模型构建社会网络，并抽样验证“朋友关系概率-rank”之间的幂次关系P(r)∝r^(−q) 中q的数值；
-## 在alpha=2.0下构建WSK网络
-## WSK Network Analysis
-- Grid size: 100x100
-- Number of nodes: 10000
-- Number of edges: 27598
-- Clustering exponent alpha: 2.0
-- Estimated q value: 1.8125
+### Network structure
 
-## 网络可视化
-## Network Visualization
-![Network Visualization](network_visualization.png)
+![Regular and rewired 20 x 20 network regions](ws_reference_networks.png)
 
-## 计算距离分布
-## Distance Distribution
-![Distance Distribution](distance_distribution.png)
-结论：短路径概率为1，在WSK模型的建构下，绝大多数节点对之间都存在极短的路径，符合小世界理论。
+The right panel uses the edges inside the same 20 x 20 region as the recorded
+100 x 100 run; edges leaving the region are omitted. Orange lines indicate new
+connections within the crop. The regular panel shows the corresponding local
+eight-neighbor lattice before rewiring.
 
-## 拟合q值
-## Rank-Probability Relationship
-![Rank-Probability Relationship](rank_probability.png)
-结论：在双对数坐标下，排名（Rank）与连接概率符合线性关系 ln(P)=−k⋅ln(Rank)+b，其中斜率 k≈0.90625，由此推导出距离指数 q≈1.8125。
+## Distance-dependent network
 
-## 具体数据取值
-## Rank-Probability Data
-值得关注的是排名99的节点比排名20的节点连接概率高，这是圆环边界条件导致的，在距离到达边界时，曼哈顿距离因为“绕回”而产生节点重叠。
+The recorded WSK run uses 10,000 nodes, 27,598 edges, and distance exponent
+`alpha = 2.0`. The plot below summarizes the distances of observed links.
+Its horizontal coordinate is the ordinal index of each nonempty Manhattan-
+distance bin, not the rank of an individual person's neighbor. The line is a
+log-log fit to the observed bin frequencies, with slope approximately
+`-1.8125`. This fitted value describes this implementation and does not by
+itself establish a theoretical rank-based law.
+
+![Recorded distance-bin frequencies and log-log fit](wsk_reference_rank.png)
+
+The model wraps local lattice neighbors at the boundary but computes the
+Manhattan distances used for the long-range sampling and the plot without
+wrapping. This convention contributes to the shape of the recorded distribution
+and should be considered when comparing it with other implementations.
+
+### Recorded distance-bin frequencies
+
+Each row is the proportion of the 55,196 link incidences in that bin. The
+table retains the original six-decimal output.
+
 | Rank | Probability |
 |------|-------------|
 | 1 | 0.717443 |
