@@ -7,7 +7,7 @@ Coursework in network science, ranking algorithms, game theory, and computationa
 | Project | Question and approach |
 | --- | --- |
 | [Network visualization](hw01-network-visualization/) | Build a weighted character network and explore a Facebook ego network with NetworkX and PyVis. |
-| [Network homophily](hw02-network-homophily/) | Compare gender homophily across 10 ego networks using E-I index and modularity. |
+| [Network homophily and evolution](hw02-network-homophily/) | Compare gender homophily across 10 ego networks, then answer the slide-deck extension question with a friendship and group-affiliation evolution model. |
 | [Small-world networks](hw03-small-world-networks/) | Study distance and degree patterns in Watts-Strogatz and Kleinberg-style networks. |
 | [PageRank](hw04-pagerank/) | Implement iterative PageRank and inspect the Web-Google graph. |
 | [Game theory](hw05-game-theory/) | Work through two teaching cases with payoff matrices and Nash equilibria. |
